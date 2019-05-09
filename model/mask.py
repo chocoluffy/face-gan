@@ -107,8 +107,8 @@ def get_bounding_box_helper(x1, y1, x2, y2, h1, h2):
     
 def get_bounding_box(x1, y1, x2, y2):
     dist = math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
-    h1_ratio = 0.5
-    h2_ratio = 0.5
+    h1_ratio = 0.7
+    h2_ratio = 0.7
     
     return get_bounding_box_helper(x1, y1, x2, y2, dist*h1_ratio, dist*h2_ratio)
 
