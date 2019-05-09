@@ -8,6 +8,17 @@ import imutils
 import dlib
 import sys
 
+def enlarge_diagonal(x1, y1, x2, y2):
+	r = 0.30
+	x1_ = x1 - (x2-x1)*r
+	x2_ = x2 + (x2-x1)*r
+
+	y1_ = y1 - (y2-y1)*r
+	y2_ = y2 + (y2-y1)*r
+
+	return x1_, y1_, x2_, y2_
+
+
 def resize_image(path):
     image = cv2.imread(path)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -26,10 +37,9 @@ def resize_image(path):
     image2 = Image.fromarray(image)
     image2.save(path)
 
-
 def eye_detector(shape_predictor, image_dir):
-    # initialize dlib's face detector (HOG-based) and then create the facial
-    # landmark predictor
+    # initialize dlib's face detector (HOG-based) and then create
+    # the facial landmark predictor
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(shape_predictor)
     
@@ -46,19 +56,19 @@ def eye_detector(shape_predictor, image_dir):
     
     # loop over the face detections
     for (i, rect) in enumerate(rects):
-            # determine the facial landmarks for the face region, then convert
-            # the landmark (x, y)-coordinates to a NumPy array
+            # determine the facial landmarks for the face region, then
+            # convert the landmark (x, y)-coordinates to a NumPy array
             shape = predictor(gray, rect)
             shape = face_utils.shape_to_np(shape)
     
             # loop over the face parts individually
             for (name, (i, j)) in face_utils.FACIAL_LANDMARKS_IDXS.items():
-                # clone the original image so we can draw on it, then display
-                # the name of the face part on the image
+                # clone the original image so we can draw on it, then
+                # display the name of the face part on the image
                 clone = image.copy()
     
-                # loop over the subset of facial landmarks, drawing the specific
-                # face part
+                # loop over the subset of facial landmarks, drawing the
+                # specific face part
                 for (x, y) in shape[i:j]:
                     cv2.circle(clone, (x, y), 1, (0, 0, 255), -1)
                     if name == 'left_eye':
@@ -87,12 +97,6 @@ def get_bounding_box_helper(x1, y1, x2, y2, h1, h2):
 
         delta_x2 = 0
         delta_y2 = h2
-	
-    scale = 2.5
-    delta_x1 = delta_x1*scale
-    delta_y1 = delta_y1*scale
-    delta_x2 = delta_x2*scale
-    delta_y2 = delta_y2*scale
     
     point1 = [x1+delta_x1, y1+delta_y1]
     point2 = [x1-delta_x2, y1-delta_y2]
@@ -104,7 +108,7 @@ def get_bounding_box_helper(x1, y1, x2, y2, h1, h2):
 def get_bounding_box(x1, y1, x2, y2):
     dist = math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
     h1_ratio = 0.3
-    h2_ratio = 0.1
+    h2_ratio = 0.3
     
     return get_bounding_box_helper(x1, y1, x2, y2, dist*h1_ratio, dist*h2_ratio)
 
@@ -118,12 +122,11 @@ if __name__ == "__main__":
     image_path = sys.argv[2]
     mask_path = sys.argv[4]
     resize_image(image_path)
-    left, right, shape, original_shape = eye_detector("./model/shape_predictor_68_face_landmarks.dat", image_path)
+    left, right, shape, original_shape = eye_detector("shape_predictor_68_face_landmarks.dat", image_path)
 
     if (len(left) != 0 or len(right) != 0):
-        left_mask = make_mask(left[0][0], left[0][1], left[3][0], left[3][1], shape)
-        right_mask = make_mask(right[0][0], right[0][1], right[3][0], right[3][1], shape)
+        left_mask = make_mask(*enlarge_diagonal(left[0][0], left[0][1], left[3][0], left[3][1]), shape)
+        right_mask = make_mask(*enlarge_diagonal(right[0][0], right[0][1], right[3][0], right[3][1]), shape)
         mask = left_mask + right_mask
         mask_image = Image.fromarray(mask).resize([original_shape[1], original_shape[0]])
         mask_image.save(mask_path)
-
