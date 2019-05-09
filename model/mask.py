@@ -9,7 +9,7 @@ import dlib
 import sys
 
 def enlarge_diagonal(x1, y1, x2, y2):
-	r = 0.30
+	r = 0.05
 	x1_ = x1 - (x2-x1)*r
 	x2_ = x2 + (x2-x1)*r
 
