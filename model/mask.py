@@ -107,8 +107,8 @@ def get_bounding_box_helper(x1, y1, x2, y2, h1, h2):
     
 def get_bounding_box(x1, y1, x2, y2):
     dist = math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
-    h1_ratio = 0.3
-    h2_ratio = 0.3
+    h1_ratio = 0.5
+    h2_ratio = 0.5
     
     return get_bounding_box_helper(x1, y1, x2, y2, dist*h1_ratio, dist*h2_ratio)
 
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     image_path = sys.argv[2]
     mask_path = sys.argv[4]
     resize_image(image_path)
-    left, right, shape, original_shape = eye_detector("shape_predictor_68_face_landmarks.dat", image_path)
+    left, right, shape, original_shape = eye_detector("./model/shape_predictor_68_face_landmarks.dat", image_path)
 
     if (len(left) != 0 or len(right) != 0):
         left_mask = make_mask(*enlarge_diagonal(left[0][0], left[0][1], left[3][0], left[3][1]), shape)
