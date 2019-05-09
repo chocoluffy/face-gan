@@ -24,14 +24,17 @@ def resize_image(path):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     height = image.shape[0]
     width = image.shape[1]
+
     shape_min = min(height, width)
     width_new = int(width/shape_min*257)
+    height_new = int(height/shape_min*257)
+
     image = imutils.resize(image, width=width_new)
 
-    if (height>=width):
+    if (height_new>=width_new):
         image = image[0:256, 0:256]
     else:
-        padding = int((width-height)/2)
+        padding = int((width_new-256)/2)
         image = image[0:256, padding:padding+256]
 
     image2 = Image.fromarray(image)
@@ -76,7 +79,7 @@ def eye_detector(shape_predictor, image_dir):
                     if name == 'right_eye':
                         right_eye.append((x, y))
                         
-    return left_eye, right_eye, image.shape, original_shape
+    return left_eye + right_eye, image.shape, original_shape
 
 def get_bounding_box_helper(x1, y1, x2, y2, h1, h2):
     delta_x1 = None
@@ -107,8 +110,8 @@ def get_bounding_box_helper(x1, y1, x2, y2, h1, h2):
     
 def get_bounding_box(x1, y1, x2, y2):
     dist = math.sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
-    h1_ratio = 0.7
-    h2_ratio = 0.7
+    h1_ratio = 0.5
+    h2_ratio = 0.5
     
     return get_bounding_box_helper(x1, y1, x2, y2, dist*h1_ratio, dist*h2_ratio)
 
@@ -122,11 +125,12 @@ if __name__ == "__main__":
     image_path = sys.argv[2]
     mask_path = sys.argv[4]
     resize_image(image_path)
-    left, right, shape, original_shape = eye_detector("./model/shape_predictor_68_face_landmarks.dat", image_path)
+    eyes, shape, original_shape = eye_detector("./model/shape_predictor_68_face_landmarks.dat", image_path)
 
-    if (len(left) != 0 or len(right) != 0):
-        left_mask = make_mask(*enlarge_diagonal(left[0][0], left[0][1], left[3][0], left[3][1]), shape)
-        right_mask = make_mask(*enlarge_diagonal(right[0][0], right[0][1], right[3][0], right[3][1]), shape)
-        mask = left_mask + right_mask
-        mask_image = Image.fromarray(mask).resize([original_shape[1], original_shape[0]])
-        mask_image.save(mask_path)
+    mask = np.zeros(shape, dtype = "uint8")
+    while(len(eyes) != 0):
+        eye_mask = make_mask(*enlarge_diagonal(eyes[0][0], eyes[0][1], eyes[3][0], eyes[3][1]), shape)
+        mask = mask + eye_mask
+        eyes = eyes[6:]
+    mask_image = Image.fromarray(mask).resize([original_shape[1], original_shape[0]])
+    mask_image.save(mask_path)
